@@ -1,0 +1,75 @@
+Docker Threat Modeling
+Given Docker's system components and the STRIDE framework, identify five potential threats that may arise.
+
+1. Spoofing 
+This can occur when a sidecar container has intentional access to the primary container's namespace 
+and may spoof the namespace used by the primary container, resulting in isolation tampering
+
+2. Tampering
+An attacker gets control of the Docker client. 
+This could lead to tampering of the Dockerfile that’s used to build the image affecting Dockerfile
+
+3. Repudiation
+A user may make changes to the daemon that are not legitimate, leading to misconfiguration.
+
+4. Information Disclosure
+The Docker host file system may be misconfigured, exposing sensitive information and leading to insecure defaults.
+
+5. Denial of Service
+Daemon memory for the running container may be over-allocated, leading to a misconfiguration.
+
+6. Elevation of Privilege:
+Daemon privilege may be escalated if a user name is not defined and the container runs as root, which gives access to any other container on the same host, leading to isolation tampering.
+
+Kubernetes Threat Modeling
+Given Kubernetes' system components and the STRIDE framework, identify five potential threats that may arise.
+
+1.Spoofing
+Kubernetes ships with insecure defaults, for example, all pods have CAP_NET_RAW permissions. 
+This allows all pods to open raw sockets and inject malicious packets into the Kubernetes container network, which may lead to spoofing.
+
+2.Repudiation
+Kubernetes natively doesn't allow certificate revocation, which may lead to repudiation if a certificate cannot be revoked when necessary.
+
+3. Denial of Service
+Kubernetes ships without an upper limit for setting the memory footprint. This may lead to a denial of service which could result in exhausting resources needed to run the pod.
+
+4. Information Disclosure
+Sensitive information may be disclosed via the etcd key value store.
+
+5. Elevation of Priviledge
+Several Kubernetes distributions have made the decision that they don’t consider malicious containers part of their threat model.
+As such, once an attacker has that level of access then there are minimal controls, by default, stopping them from getting full cluster-admin rights. 
+Ensure that all management ports visible oin the cluster network require authentication for all users.
+
+Docker-bench Run Results and Analysis
+From the failed findings, select and document 3 findings from the Docker-bench results that you want to harden based on the 5 attack surface areas you identified in Step 1. At least 1 of the 3 hardened findings should be different from the ones mentioned in the exercise (i.e. 5.10, 5.14, and 5.22).
+
+[FAIL] 4.5 Ensure Content trust for Docker is Enabled (Scored)
+Content trust provides the ability to use digital signatures for data sent to and received from remote Docker
+registries. These signatures allow client-side verification of the identity and the publisher of specific image
+tags and ensures the provenance of container images.
+
+To enable content trust in a bash shell, you should enter:
+
+export DOCKER_CONTENT_TRUST=1
+
+You should execute the following command:
+
+echo $DOCKER_CONTENT_TRUST
+
+This should return a value of 1.
+
+[FAIL] 4.1 Ensure that a user for the container has been created (Scored)
+make use of the useradd command to add a specific user before the USER instruction in the Dockerfile.
+For example, add the below lines in the Dockerfile to create a user in the container:
+RUN useradd -d /home/username -m -s /bin/bash username
+
+No remediation at this error, just to make sure to have usename added in the Dockerfile (not using root user)
+
+[FAIL] 5.22 Ensure that docker exec commands are not used with the privileged option (Scored)
+You should not use docker exec with the --privileged option.
+Using the --privileged option in docker exec commands gives extended Linux capabilities to the command. 
+This could potentially be an insecure practice, particularly when you are running containers with reduced capabilities or with enhanced restrictions.
+
+No remediation at this error, just to make sure not to use --priviledge flag when using docker exec.
